@@ -37,7 +37,11 @@ class Folder(db.Model):
 class Note(db.Model):
     __tablename__ = 'note'
     note_id = db.Column(db.Integer,primary_key=True,autoincrement=True,comment="笔记ID")
-    folder_id = db.Column(db.Integer,db.ForeignKey('folder.folder_id'),nullable=False,comment="文件夹ID")
+    folder_id = db.Column(db.Integer,db.ForeignKey('folder.folder_id'),nullable=True,comment="文件夹ID")
+
+    user_id = db.Column(db.Integer, db.ForeignKey('userinfo.user_id'), nullable=False, comment="用户ID")
+    user = db.relationship('UserInfo', backref=db.backref('note', lazy=True))
+
     folder = db.relationship("Folder", backref=db.backref('note', lazy=True))
     title = db.Column(db.String(64),comment="笔记标题")
     content = db.Column(db.Text,comment="笔记内容")

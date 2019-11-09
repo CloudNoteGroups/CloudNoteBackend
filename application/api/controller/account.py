@@ -4,6 +4,7 @@ from flask import (
 from application.api.common.utils import config,md5,get_db,time_format,model_to_dict
 bp = Blueprint('user', __name__, url_prefix='/api/account')
 from application.api.model.models import UserInfo,Token
+from application.api.common.response import response
 import time
 import re
 @bp.route('/login',methods=['POST'])
@@ -32,15 +33,16 @@ def login():
         )
         db.session.add(tokenObj)
         db.session.commit()
-        return jsonify({
-            'code':1,
-            'token':token
-        })
+        return response({
+            'token':token,
+            'login':True
+        },)
 
-    return jsonify({
-        'code':0,
-        'msg':'登陆失败，账号或者密码错误'
+    return response({
+        'msg':"登陆失败，账号或者密码错误",
+        'login':False
     })
+
 
 @bp.route('/register',methods=['POST'])
 def register():
@@ -97,11 +99,10 @@ def register():
         db = get_db()
         db.session.add(userInfo)
         db.session.commit()
-        response = {
-            'Code':1,
+        res = {
             'msg':'注册成功',
             'username':username,
         }
-        return jsonify(response)
-    return jsonify(error)
+        return response(res)
+    return response(error)
 
