@@ -1,6 +1,8 @@
 import os
-from flask import Flask,request,jsonify
-from application.api.model.models import Token
+from flask import Flask,request
+from application.api.model.models import Token,UserInfo
+from application.api.common.response import response
+from application.api.common.user import online
 
 import time
 def create_app(test_config=None):
@@ -29,8 +31,11 @@ def create_app(test_config=None):
     @app.route('/hello')
     def hello():
         return 'Hello World'
+
     # 引入对应的app注册
     from application.api.controller import account
+    from application.api import api
+    app.register_blueprint(api.bp)
     app.register_blueprint(account.bp)
     return app
 app = create_app()
@@ -53,18 +58,18 @@ def before_request():
     if path not in app.config['EXCLUDE_URL']:
         token = request.headers.get('token', None)
         if not token:
-            return jsonify({
-                'code':0,
+            return response({
                 'msg':'请先登陆',
-                'login':True
+                'login':False
             })
 
         tokenObj = Token.query.filter_by(token=token).first()
+        userObj = UserInfo.query.filter_by(user_id=tokenObj.user_id).first()
+        online.user = userObj
         now_time = time.time()
         expire_date = str_to_timestamp(str(tokenObj.expire_date))
         if expire_date <= now_time:
-            return jsonify({
-                'code':0,
+            return response({
                 'msg':'Token已过期,请重新登陆',
-                'login':True
+                'login':False
             })
