@@ -15,6 +15,10 @@ def login():
     """
     username = request.form.get('username',None)
     password = request.form.get('password',None)
+    if not username or not password:
+        return response(
+            code=401,message='UserName or Password is NULL'
+        )
     userObj = UserInfo.query.filter_by(username=username,password=md5(password)).first()
 
     if userObj:

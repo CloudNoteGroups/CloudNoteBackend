@@ -16,11 +16,11 @@ note_fields = fields.Nested({
 
 })
 class NoteResource(Resource):
-    base_feilds = {
+    base_fields = {
         'code':fields.Integer(default=200),
-        'message':fields.String(default='sucess')
+        'message':fields.String(default='success')
     }
-    resource_fields = base_feilds
+    resource_fields = base_fields
     resource_fields['data'] = fields.List(note_fields)
     @marshal_with(resource_fields)
     def get(self):
@@ -32,7 +32,7 @@ class NoteResource(Resource):
         }
         return res
 
-    @marshal_with(base_feilds)
+    @marshal_with(base_fields)
     def post(self):
         title = request.form.get('title','')
         content = request.form.get('content','')

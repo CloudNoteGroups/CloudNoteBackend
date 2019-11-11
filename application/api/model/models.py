@@ -29,8 +29,9 @@ class Folder(db.Model):
 
     folder_name = db.Column(db.String(16),nullable=False,comment="文件夹名")
 
-    parent_id = db.Column(db.Integer,db.ForeignKey('folder.folder_id'),nullable=False,comment="自关联") # 自关联
+    parent_id = db.Column(db.Integer,db.ForeignKey('folder.folder_id'),nullable=True,comment="自关联") # 自关联
     parent =  db.relationship("Folder", remote_side=[folder_id], backref='folder')
+    # children = db.relationship("Folder", backref=db.backref("parent", remote_side=folder_id))
 
     add_time = db.Column(db.DateTime,comment="加入时间")
 
