@@ -5,6 +5,7 @@ from application.api.common.utils import config,md5,get_db,time_format,model_to_
 bp = Blueprint('user', __name__, url_prefix='/api/account')
 from application.api.model.models import UserInfo,Token
 from application.api.common.response import response
+from application.api.common.user import online
 import time
 import re
 @bp.route('/login',methods=['POST'])
@@ -13,8 +14,13 @@ def login():
     登陆接口,登陆成功后返回token
     :return: json
     """
-    username = request.form.get('username',None)
-    password = request.form.get('password',None)
+    userinfo = request.get_json()
+    if request.headers['Content-Type'] == 'application/json;charset=UTF-8':
+        username = userinfo['username']
+        password = userinfo['password']
+    else:
+        username = request.form.get('username', None)
+        password = request.form.get('password', None)
     if not username or not password:
         return response(
             code=401,message='UserName or Password is NULL'
@@ -42,10 +48,7 @@ def login():
             'login':True
         },)
 
-    return response({
-        'msg':"登陆失败，账号或者密码错误",
-        'login':False
-    })
+    return response(message='Incorrect account or password',code=401)
 
 
 @bp.route('/register',methods=['POST'])
@@ -54,10 +57,19 @@ def register():
     注册接口
     :return:
     """
-    username = request.form.get('username',None)
-    password = request.form.get('password',None)
-    email = request.form.get('email',None)
-    error = {}
+    userinfo = request.get_json()
+    if request.headers['Content-Type'] == 'application/json;charset=UTF-8':
+        username = userinfo['username']
+        password = userinfo['password']
+        email = userinfo['email']
+    else:
+        username = request.form.get('username',None)
+        password = request.form.get('password',None)
+        email = request.form.get('email',None)
+
+    error = {
+
+    }
     if username:
         if len(username) > 16 or len(username) < 6:
             error['username'] = '用户名长度：6-16位'
@@ -104,9 +116,16 @@ def register():
         db.session.add(userInfo)
         db.session.commit()
         res = {
+            'error': False,
             'msg':'注册成功',
             'username':username,
         }
         return response(res)
+    error['error'] = True
     return response(error)
-
+@bp.route('/user',methods=['GET'])
+def userinfo():
+    user = model_to_dict(online.user)
+    # user.remove('password')
+    del user['password']
+    return response(user)

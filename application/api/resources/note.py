@@ -3,7 +3,7 @@ from flask_restful import Resource,marshal_with,reqparse
 from flask import request
 from application.api.common.user import online
 from application.api.model.models import Note
-from application.api.common.utils import time_format,get_db
+from application.api.common.utils import time_format,get_db,model_to_dict
 
 note_fields = fields.Nested({
     'note_id': fields.Integer(),
@@ -24,7 +24,13 @@ class NoteResource(Resource):
     resource_fields['data'] = fields.List(note_fields)
     @marshal_with(resource_fields)
     def get(self):
-        noteList = Note.query.filter_by(user_id=online.user.user_id).all()
+        where = {
+            'user_id':online.user.user_id
+        }
+        folder_id = request.args.get('folder_id',None)
+        if folder_id:
+            where['folder_id'] = folder_id
+        noteList = Note.query.filter_by(**where).all()
         res = {
             'code':200,
             'message':'success',
@@ -32,11 +38,16 @@ class NoteResource(Resource):
         }
         return res
 
-    @marshal_with(base_fields)
     def post(self):
-        title = request.form.get('title','')
-        content = request.form.get('content','')
-        folder_id = request.form.get('folder_id',None)
+        form = request.get_json()
+        if request.headers['Content-Type'] == 'application/json;charset=UTF-8':
+            title = form.get('title','')
+            content = form.get('content','')
+            folder_id = form.get('folder_id',None)
+        else:
+            title = request.form.get('title','')
+            content = request.form.get('content','')
+            folder_id = request.form.get('folder_id',None)
         noteObj = Note(
             user_id = online.user.user_id,
             title=title,
@@ -48,9 +59,17 @@ class NoteResource(Resource):
         db = get_db()
         db.session.add(noteObj)
         db.session.commit()
+        print(noteObj.note_id)
+        data = {
+            'note_id':noteObj.note_id,
+            'title':title,
+            'content':content
+        }
         res = {
             'code':200,
-            'message':'success'
+            'message':'success',
+            'data':data
+
         }
         return res
 
@@ -66,10 +85,15 @@ class NoteResource1(Resource):
         noteObj, flag = self.verify(pk)
         if not flag:
             return noteObj
+        form = request.get_json()
+        if request.headers['Content-Type'] == 'application/json;charset=UTF-8':
+            title = form.get('title', '')
+            content = form.get('content', ''),
+        else:
+            title = request.form.get('title')
+            content = request.form.get('content')
 
-        title = request.form.get('title')
-        content = request.form.get('content')
-        noteObj.title = title if title else noteObj.title
+        noteObj.title = title
         noteObj.content = content if content else noteObj.content
         noteObj.up_time = time_format()
         db = get_db()
