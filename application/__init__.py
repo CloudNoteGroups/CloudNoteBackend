@@ -58,16 +58,16 @@ def before_request():
     if path not in app.config['EXCLUDE_URL']:
         token = request.headers.get('token', None)
         if not token:
-            return response(message="not auth",code="401")
+            return response(message="not auth",code=401)
 
         tokenObj = Token.query.filter_by(token=token).first()
         if not tokenObj:
-            return response(message="not auth",code="401")
+            return response(message="not auth",code=401)
         userObj = UserInfo.query.filter_by(user_id=tokenObj.user_id).first()
         if not userObj:
-            return response(message="not auth",code="401")
+            return response(message="not auth",code=401)
         online.user = userObj
         now_time = time.time()
         expire_date = str_to_timestamp(str(tokenObj.expire_date))
         if expire_date <= now_time:
-            return response(message="not auth",code="401")
+            return response(message="not auth",code=401)
