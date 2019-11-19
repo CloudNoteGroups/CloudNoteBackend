@@ -13,6 +13,7 @@ note_fields = fields.Nested({
     'status': fields.Integer(default=1),
     'add_time': fields.DateTime(),
     'up_time': fields.DateTime(),
+    'is_collect':fields.Boolean()
 
 })
 class NoteResource(Resource):
@@ -31,6 +32,17 @@ class NoteResource(Resource):
         if folder_id:
             where['folder_id'] = folder_id
         noteList = Note.query.filter_by(**where).all()
+        # 判断自己的笔记列表是否有已收藏的
+        for note in noteList:
+            if note.collect:
+                for collect in note.collect:
+                    if collect.user_id == online.user.user_id:
+                        note.is_collect = True
+                        break
+                else:
+                    note.is_collect = False
+            else:
+                note.is_collect = False
         res = {
             'code':200,
             'message':'success',
@@ -109,6 +121,7 @@ class NoteResource1(Resource):
         if not flag:
             return noteObj
         db = get_db()
+        [db.session.delete(note) for note in noteObj.collect] # 批量将外键删除
         db.session.delete(noteObj)
         db.session.commit()
         return {

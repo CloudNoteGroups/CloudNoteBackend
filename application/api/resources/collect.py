@@ -16,6 +16,7 @@ collect_fields = fields.Nested({
     'status': fields.Integer(default=1),
     'add_time': fields.DateTime(),
     'up_time': fields.DateTime(),
+    'is_collect':fields.Boolean(default=True)
 })
 resource_fields = base_fields
 resource_fields['data'] = fields.List(collect_fields)
@@ -23,10 +24,10 @@ class CollectResource(Resource):
 
     @marshal_with(resource_fields)
     def get(self):
-        print(online.user.collect[0].note)
         collects = online.user.collect
         note_list = []
         for collect in collects:
+            collect.note.is_collect = True
             note_list.append(
                 collect.note
             )
@@ -44,6 +45,11 @@ class CollectResource(Resource):
         noteObj = Note.query.filter_by(note_id=note_id).first()
         if  not noteObj:
             return response(message='没有找到这个笔记',code=201)
+
+        collectObj = Collect.query.filter_by(user_id=online.user.user_id,note_id=note_id).first()
+        if collectObj:
+            return response(message='该笔记已收藏',code=201)
+
         isself = True if noteObj.user_id==online.user.user_id else False
 
         collect = Collect(
